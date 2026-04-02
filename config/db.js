@@ -38,6 +38,10 @@ const syncDatabase = async () => {
           github_url VARCHAR(255),
           demo_url VARCHAR(255),
           tags JSON,
+          views INT DEFAULT 0,
+          cat VARCHAR(255) DEFAULT 'Application Web',
+          status ENUM('live', 'pause', 'archive') DEFAULT 'live',
+          year VARCHAR(10),
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
@@ -73,6 +77,15 @@ const syncDatabase = async () => {
           content TEXT,
           photo VARCHAR(255),
           status ENUM('pending', 'published') DEFAULT 'pending',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Testimonial Tokens table
+      CREATE TABLE IF NOT EXISTS testimonial_tokens (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          token VARCHAR(255) NOT NULL UNIQUE,
+          used TINYINT(1) DEFAULT 0,
+          expires_at DATETIME NOT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
@@ -141,11 +154,33 @@ const syncDatabase = async () => {
       -- Analytics table
       CREATE TABLE IF NOT EXISTS analytics (
           id INT AUTO_INCREMENT PRIMARY KEY,
+          event_type VARCHAR(50),
           page VARCHAR(255),
+          path TEXT,
           source VARCHAR(255),
+          ip VARCHAR(45),
+          referrer TEXT,
+          utm_source VARCHAR(255),
+          utm_medium VARCHAR(255),
+          utm_campaign VARCHAR(255),
+          utm_content VARCHAR(255),
+          utm_term VARCHAR(255),
           country VARCHAR(255),
-          device VARCHAR(255),
-          visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          device VARCHAR(50),
+          user_agent TEXT,
+          language VARCHAR(50),
+          timezone VARCHAR(100),
+          screen_width INT,
+          screen_height INT,
+          session_id VARCHAR(255),
+        consent_analytics BOOLEAN DEFAULT TRUE,
+        ad_interests JSON,
+        ad_click_source VARCHAR(255),
+        retargeting_eligible BOOLEAN DEFAULT FALSE,
+        color_scheme VARCHAR(20),
+        device_memory FLOAT,
+        hardware_concurrency INT,
+        visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
       CREATE TABLE IF NOT EXISTS technical_levels (
@@ -171,6 +206,19 @@ const syncDatabase = async () => {
           secondary_cta_url VARCHAR(255),
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      );
+
+      -- Table pour stocker les sessions/cookies uniques par utilisateur
+      CREATE TABLE IF NOT EXISTS cookies_data (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          session_id VARCHAR(255) UNIQUE,
+          ip VARCHAR(45),
+          device VARCHAR(50),
+          user_agent TEXT,
+          language VARCHAR(50),
+          country VARCHAR(255),
+          last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `;
 
@@ -204,6 +252,22 @@ const syncDatabase = async () => {
     }
 
     // Add Skills columns if they don't exist (Migration)
+    try {
+      await connection.query('ALTER TABLE projects ADD COLUMN views INT DEFAULT 0 AFTER tags');
+    } catch (err) {
+      // Column probably already exists
+    }
+
+    try {
+      await connection.query("ALTER TABLE projects ADD COLUMN cat VARCHAR(255) DEFAULT 'Application Web' AFTER views");
+    } catch (err) {}
+    try {
+      await connection.query("ALTER TABLE projects ADD COLUMN status ENUM('live', 'pause', 'archive') DEFAULT 'live' AFTER cat");
+    } catch (err) {}
+    try {
+      await connection.query("ALTER TABLE projects ADD COLUMN year VARCHAR(10) AFTER status");
+    } catch (err) {}
+
     try {
       await connection.query('ALTER TABLE skills ADD COLUMN IF NOT EXISTS title VARCHAR(255) NOT NULL AFTER id');
       await connection.query('ALTER TABLE skills ADD COLUMN IF NOT EXISTS description TEXT AFTER title');
@@ -243,11 +307,30 @@ const syncDatabase = async () => {
     } catch (err) {
     }
 
+    try {
+      await connection.query('ALTER TABLE analytics ADD COLUMN IF NOT EXISTS user_agent TEXT AFTER device');
+      await connection.query('ALTER TABLE analytics MODIFY COLUMN consent_analytics BOOLEAN DEFAULT TRUE AFTER session_id');
+      await connection.query('ALTER TABLE analytics ADD COLUMN IF NOT EXISTS ad_interests JSON AFTER consent_analytics');
+      await connection.query('ALTER TABLE analytics ADD COLUMN IF NOT EXISTS ad_click_source VARCHAR(255) AFTER ad_interests');
+      await connection.query('ALTER TABLE analytics ADD COLUMN IF NOT EXISTS retargeting_eligible BOOLEAN DEFAULT FALSE AFTER ad_click_source');
+      await connection.query('ALTER TABLE analytics ADD COLUMN IF NOT EXISTS color_scheme VARCHAR(20) AFTER retargeting_eligible');
+      await connection.query('ALTER TABLE analytics ADD COLUMN IF NOT EXISTS device_memory FLOAT AFTER color_scheme');
+      await connection.query('ALTER TABLE analytics ADD COLUMN IF NOT EXISTS hardware_concurrency INT AFTER device_memory');
+    } catch (err) {
+      try { await connection.query('ALTER TABLE analytics ADD COLUMN user_agent TEXT AFTER device'); } catch (e) {}
+      try { await connection.query('ALTER TABLE analytics ADD COLUMN ad_interests JSON AFTER consent_analytics'); } catch (e) {}
+      try { await connection.query('ALTER TABLE analytics ADD COLUMN ad_click_source VARCHAR(255) AFTER ad_interests'); } catch (e) {}
+      try { await connection.query('ALTER TABLE analytics ADD COLUMN retargeting_eligible BOOLEAN DEFAULT FALSE AFTER ad_click_source'); } catch (e) {}
+      try { await connection.query('ALTER TABLE analytics ADD COLUMN color_scheme VARCHAR(20) AFTER retargeting_eligible'); } catch (e) {}
+      try { await connection.query('ALTER TABLE analytics ADD COLUMN device_memory FLOAT AFTER color_scheme'); } catch (e) {}
+      try { await connection.query('ALTER TABLE analytics ADD COLUMN hardware_concurrency INT AFTER device_memory'); } catch (e) {}
+    }
+
     console.log('Database tables synchronized successfully');
 
     connection.release();
   } catch (error) {
-    console.error('Error during database synchronization:', error.message);
+    console.error('Error during database synchronization:', error);
   }
 };
 

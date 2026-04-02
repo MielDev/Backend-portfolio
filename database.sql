@@ -121,10 +121,32 @@ CREATE TABLE IF NOT EXISTS hero (
 -- Analytics table
 CREATE TABLE IF NOT EXISTS analytics (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    event_type VARCHAR(50),
     page VARCHAR(255),
+    path TEXT,
     source VARCHAR(255),
+    ip VARCHAR(45),
+    referrer TEXT,
+    utm_source VARCHAR(255),
+    utm_medium VARCHAR(255),
+    utm_campaign VARCHAR(255),
+    utm_content VARCHAR(255),
+    utm_term VARCHAR(255),
     country VARCHAR(255),
-    device VARCHAR(255),
+    device VARCHAR(50),
+    user_agent TEXT,
+    language VARCHAR(50),
+    timezone VARCHAR(100),
+    screen_width INT,
+    screen_height INT,
+    session_id VARCHAR(255),
+    consent_analytics BOOLEAN DEFAULT TRUE,
+    ad_interests JSON,
+    ad_click_source VARCHAR(255),
+    retargeting_eligible BOOLEAN DEFAULT FALSE,
+    color_scheme VARCHAR(20),
+    device_memory FLOAT,
+    hardware_concurrency INT,
     visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -153,4 +175,17 @@ CREATE TABLE IF NOT EXISTS availability (
     secondary_cta_url VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Table pour stocker les sessions/cookies uniques par utilisateur
+CREATE TABLE IF NOT EXISTS cookies_data (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    session_id VARCHAR(255) UNIQUE,
+    ip VARCHAR(45),
+    device VARCHAR(50),
+    user_agent TEXT,
+    language VARCHAR(50),
+    country VARCHAR(255),
+    last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
