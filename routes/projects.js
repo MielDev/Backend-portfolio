@@ -19,8 +19,8 @@ router.get('/:id', projectController.getProjectById);
 router.post('/:id/view', projectController.incrementViewCount);
 
 // Protected routes
-router.post('/', auth, upload.single('image'), projectController.createProject);
-router.put('/:id', auth, upload.single('image'), projectController.updateProject);
+router.post('/', auth, upload.single('image'), projectValidation, projectController.createProject);
+router.put('/:id', auth, upload.single('image'), projectValidation, projectController.updateProject);
 router.delete('/:id', auth, projectController.deleteProject);
 
 module.exports = router;

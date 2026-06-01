@@ -19,3 +19,27 @@ exports.updateSetting = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+exports.uploadAsset = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    const assetPath = `/uploads/branding/${req.file.filename}`;
+
+    res.json({
+      success: true,
+      message: 'Settings asset uploaded successfully',
+      data: {
+        url: assetPath,
+        filename: req.file.filename,
+        originalName: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

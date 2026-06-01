@@ -1,6 +1,18 @@
 const Testimonial = require('../models/Testimonial');
 const TestimonialToken = require('../models/TestimonialToken');
 
+exports.requireValidToken = async (req, res, next) => {
+  try {
+    const isValid = await TestimonialToken.verify(req.params.token);
+    if (!isValid) {
+      return res.status(403).json({ success: false, message: 'Invalid or expired link' });
+    }
+    next();
+  } catch (error) {
+    res.status(403).json({ success: false, message: 'Invalid or expired link' });
+  }
+};
+
 exports.getPublicTestimonials = async (req, res) => {
   try {
     const testimonials = await Testimonial.getPublic();

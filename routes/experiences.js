@@ -10,6 +10,7 @@ const experienceValidation = [
   body('title').notEmpty().withMessage('Title is required'),
   body('company').notEmpty().withMessage('Company is required'),
   body('start_date').notEmpty().isDate().withMessage('Valid start date is required'),
+  body('digital_folder_url').optional({ nullable: true, checkFalsy: true }).isLength({ max: 500 }).withMessage('Digital folder URL is too long'),
   validate
 ];
 

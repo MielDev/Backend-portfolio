@@ -8,7 +8,13 @@
     "dev": "nodemon server.js",
     "seed": "node seeders/seed.js",
     "seed:analytics": "node seeders/analyticsSeeder.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node scripts/check-syntax.js",
+    "migrate": "node scripts/db-migrate.js up",
+    "migrate:down": "node scripts/db-migrate.js down",
+    "migrate:reset": "node scripts/db-migrate.js reset",
+    "migrate:create": "node scripts/db-migrate.js create",
+    "migrate:check": "node scripts/db-migrate.js check",
+    "migrate:baseline": "node scripts/migrate-baseline.js"
   },
   "keywords": [],
   "author": "",
@@ -16,15 +22,22 @@
   "type": "commonjs",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "compression": "^1.7.5",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "express-rate-limit": "^7.5.0",
     "express-validator": "^7.3.1",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.0",
     "multer": "^2.1.1",
-    "mysql2": "^3.20.0"
+    "mysql2": "^3.20.0",
+    "sanitize-html": "^2.13.1"
   },
   "devDependencies": {
+    "db-migrate": "^0.11.14",
+    "db-migrate-mysql": "^3.0.0",
     "nodemon": "^3.1.14"
   }
 }

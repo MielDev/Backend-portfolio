@@ -1,27 +1,22 @@
 const db = require('../config/db');
+const { parseArray } = require('../utils/json');
 
 class BlogPost {
   static async getPublished() {
-    const [rows] = await db.execute('SELECT * FROM blog_posts WHERE status = "published" ORDER BY created_at DESC');
-    return rows.map(row => ({
-      ...row,
-      tags: JSON.parse(row.tags || '[]')
-    }));
+    const [rows] = await db.execute(
+      'SELECT * FROM blog_posts WHERE status = "published" ORDER BY created_at DESC'
+    );
+    return rows.map((row) => ({ ...row, tags: parseArray(row.tags) }));
   }
 
   static async getAll() {
     const [rows] = await db.execute('SELECT * FROM blog_posts ORDER BY created_at DESC');
-    return rows.map(row => ({
-      ...row,
-      tags: JSON.parse(row.tags || '[]')
-    }));
+    return rows.map((row) => ({ ...row, tags: parseArray(row.tags) }));
   }
 
   static async getBySlug(slug) {
     const [rows] = await db.execute('SELECT * FROM blog_posts WHERE slug = ?', [slug]);
-    if (rows[0]) {
-      rows[0].tags = JSON.parse(rows[0].tags || '[]');
-    }
+    if (rows[0]) rows[0].tags = parseArray(rows[0].tags);
     return rows[0];
   }
 

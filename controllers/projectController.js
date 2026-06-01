@@ -21,13 +21,16 @@ exports.getProjectById = async (req, res) => {
 
 exports.createProject = async (req, res) => {
   try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'Project image is required.' });
+    }
     const data = { ...req.body };
-    if (req.file) data.image = req.file.filename;
+    data.image = req.file.filename;
     if (data.tags && typeof data.tags === 'string') {
       try {
         data.tags = JSON.parse(data.tags);
       } catch (e) {
-        console.error("Error parsing tags:", e);
+        return res.status(400).json({ success: false, message: 'Invalid tags format' });
       }
     }
     const id = await Project.create(data);
@@ -45,7 +48,7 @@ exports.updateProject = async (req, res) => {
       try {
         data.tags = JSON.parse(data.tags);
       } catch (e) {
-        console.error("Error parsing tags:", e);
+        return res.status(400).json({ success: false, message: 'Invalid tags format' });
       }
     }
     await Project.update(req.params.id, data);

@@ -12,6 +12,12 @@ module.exports = (req, res, next) => {
   }
 
   try {
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({
+        success: false,
+        message: 'Authentication is not configured.'
+      });
+    }
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();

@@ -1,11 +1,10 @@
 const db = require('../config/db');
+const { parseArray } = require('../utils/json');
 
 class Availability {
   static async get() {
     const [rows] = await db.execute('SELECT * FROM availability LIMIT 1');
-    if (rows[0]) {
-      rows[0].tags = JSON.parse(rows[0].tags || '[]');
-    }
+    if (rows[0]) rows[0].tags = parseArray(rows[0].tags);
     return rows[0];
   }
 
@@ -18,7 +17,7 @@ class Availability {
       primary_cta_text,
       primary_cta_type,
       secondary_cta_text,
-      secondary_cta_url
+      secondary_cta_url,
     } = data;
 
     const existing = await this.get();
@@ -36,7 +35,7 @@ class Availability {
           primary_cta_type,
           secondary_cta_text,
           secondary_cta_url,
-          existing.id
+          existing.id,
         ]
       );
       return existing.id;
@@ -52,7 +51,7 @@ class Availability {
         primary_cta_text,
         primary_cta_type,
         secondary_cta_text,
-        secondary_cta_url
+        secondary_cta_url,
       ]
     );
     return result.insertId;
@@ -60,4 +59,3 @@ class Availability {
 }
 
 module.exports = Availability;
-

@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const analyticsController = require('../controllers/analyticsController');
 const auth = require('../middleware/auth');
+const { analyticsLimiter } = require('../middleware/rateLimit');
 
-// Public route (Auto-called from portfolio)
-router.post('/track', analyticsController.track);
+// Public route (auto-called from portfolio) — rate-limited per IP.
+router.post('/track', analyticsLimiter, analyticsController.track);
 
 // Protected routes
 router.get('/overview', auth, analyticsController.getOverview);

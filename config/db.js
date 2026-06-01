@@ -2,6 +2,17 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const mysql = require('mysql2/promise');
 
+/**
+ * Connection pool only.
+ *
+ * Schema is no longer managed here — see /migrations and `npm run migrate`.
+ * If you need to create or alter a table, generate a new migration with:
+ *
+ *   npm run migrate:create -- name-of-change --sql-file
+ *
+ * Then edit the up/down .sql files under migrations/sqls/ and run `npm run migrate`.
+ */
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -11,330 +22,18 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  multipleStatements: true // Permet d'exécuter plusieurs requêtes SQL d'un coup (nécessaire pour le script SQL)
 });
 
-const syncDatabase = async () => {
-  try {
-    const connection = await pool.getConnection();
+// Sanity-check the connection at boot (non-fatal: lets the app still start so
+// the healthcheck can report the issue).
+pool
+  .getConnection()
+  .then((conn) => {
     console.log('Successfully connected to MySQL database');
-
-    // SQL Script for table creation
-    const sqlScript = `
-      -- Users table
-      CREATE TABLE IF NOT EXISTS users (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          username VARCHAR(255) NOT NULL UNIQUE,
-          password VARCHAR(255) NOT NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-
-      -- Projects table
-      CREATE TABLE IF NOT EXISTS projects (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          title VARCHAR(255) NOT NULL,
-          description TEXT,
-          image VARCHAR(255),
-          github_url VARCHAR(255),
-          demo_url VARCHAR(255),
-          tags JSON,
-          views INT DEFAULT 0,
-          cat VARCHAR(255) DEFAULT 'Application Web',
-          status ENUM('live', 'pause', 'archive') DEFAULT 'live',
-          year VARCHAR(10),
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-
-      -- Skills table
-      CREATE TABLE IF NOT EXISTS skills (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          title VARCHAR(255) NOT NULL,
-          description TEXT,
-          technologies JSON,
-          icon VARCHAR(255),
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-
-      -- Experiences table
-      CREATE TABLE IF NOT EXISTS experiences (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          title VARCHAR(255) NOT NULL,
-          company VARCHAR(255) NOT NULL,
-          location VARCHAR(255),
-          start_date DATE,
-          end_date DATE,
-          description JSON,
-          current BOOLEAN DEFAULT FALSE,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-
-      -- Testimonials table
-      CREATE TABLE IF NOT EXISTS testimonials (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          name VARCHAR(255) NOT NULL,
-          role VARCHAR(255),
-          company VARCHAR(255),
-          content TEXT,
-          photo VARCHAR(255),
-          status ENUM('pending', 'published') DEFAULT 'pending',
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-
-      -- Testimonial Tokens table
-      CREATE TABLE IF NOT EXISTS testimonial_tokens (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          token VARCHAR(255) NOT NULL UNIQUE,
-          used TINYINT(1) DEFAULT 0,
-          expires_at DATETIME NOT NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-
-      -- Blog Posts table
-      CREATE TABLE IF NOT EXISTS blog_posts (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          title VARCHAR(255) NOT NULL,
-          slug VARCHAR(255) NOT NULL UNIQUE,
-          content TEXT,
-          read_minutes INT,
-          image VARCHAR(255),
-          tags JSON,
-          status ENUM('draft', 'published') DEFAULT 'draft',
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-
-      -- Messages table
-      CREATE TABLE IF NOT EXISTS messages (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          name VARCHAR(255) NOT NULL,
-          email VARCHAR(255) NOT NULL,
-          subject VARCHAR(255),
-          content TEXT,
-          status ENUM('unread', 'read', 'archived') DEFAULT 'unread',
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-
-      -- About table
-      CREATE TABLE IF NOT EXISTS about (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          name VARCHAR(255),
-          title VARCHAR(255),
-          bio TEXT,
-          photo VARCHAR(255),
-          resume_url VARCHAR(255),
-          email VARCHAR(255),
-          phone VARCHAR(255),
-          location VARCHAR(255),
-          nationality VARCHAR(255),
-          interests JSON,
-          social_links JSON,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      );
-
-      -- Settings table
-      CREATE TABLE IF NOT EXISTS settings (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          setting_key VARCHAR(255) NOT NULL UNIQUE,
-          value TEXT,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      );
-
-      -- Hero table
-      CREATE TABLE IF NOT EXISTS hero (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          greeting VARCHAR(255),
-          name VARCHAR(255),
-          role VARCHAR(255),
-          description TEXT,
-          cv VARCHAR(255),
-          projects_count VARCHAR(50),
-          experience_years VARCHAR(50),
-          passion_icon VARCHAR(50)
-      );
-
-      -- Analytics table
-      CREATE TABLE IF NOT EXISTS analytics (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          event_type VARCHAR(50),
-          page VARCHAR(255),
-          path TEXT,
-          source VARCHAR(255),
-          ip VARCHAR(45),
-          referrer TEXT,
-          utm_source VARCHAR(255),
-          utm_medium VARCHAR(255),
-          utm_campaign VARCHAR(255),
-          utm_content VARCHAR(255),
-          utm_term VARCHAR(255),
-          country VARCHAR(255),
-          device VARCHAR(50),
-          user_agent TEXT,
-          language VARCHAR(50),
-          timezone VARCHAR(100),
-          screen_width INT,
-          screen_height INT,
-          session_id VARCHAR(255),
-        consent_analytics BOOLEAN DEFAULT TRUE,
-        ad_interests JSON,
-        ad_click_source VARCHAR(255),
-        retargeting_eligible BOOLEAN DEFAULT FALSE,
-        color_scheme VARCHAR(20),
-        device_memory FLOAT,
-        hardware_concurrency INT,
-        visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE TABLE IF NOT EXISTS technical_levels (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          type ENUM('hard', 'soft') NOT NULL,
-          title VARCHAR(255) NOT NULL,
-          description TEXT,
-          percent TINYINT UNSIGNED,
-          icon VARCHAR(255),
-          sort_order INT DEFAULT 0,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE TABLE IF NOT EXISTS availability (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          badge_text VARCHAR(255),
-          headline TEXT,
-          description TEXT,
-          tags JSON,
-          primary_cta_text VARCHAR(255),
-          primary_cta_type VARCHAR(50),
-          secondary_cta_text VARCHAR(255),
-          secondary_cta_url VARCHAR(255),
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      );
-
-      -- Table pour stocker les sessions/cookies uniques par utilisateur
-      CREATE TABLE IF NOT EXISTS cookies_data (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          session_id VARCHAR(255) UNIQUE,
-          ip VARCHAR(45),
-          device VARCHAR(50),
-          user_agent TEXT,
-          language VARCHAR(50),
-          country VARCHAR(255),
-          last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `;
-
-    console.log('Synchronizing tables...');
-    await connection.query(sqlScript);
-    
-    // Add CV column if it doesn't exist (Migration)
-    try {
-      await connection.query('ALTER TABLE hero ADD COLUMN IF NOT EXISTS cv VARCHAR(255) AFTER description');
-    } catch (err) {
-      // Some MySQL versions don't support ADD COLUMN IF NOT EXISTS
-      try {
-        await connection.query('ALTER TABLE hero ADD COLUMN cv VARCHAR(255) AFTER description');
-      } catch (innerErr) {
-        // Column probably already exists
-      }
-    }
-
-    // Add Interests column to about if it doesn't exist
-    try {
-      await connection.query('ALTER TABLE about ADD COLUMN interests JSON AFTER location');
-    } catch (err) {
-      // Column probably already exists
-    }
-
-    // Add Nationality column to about if it doesn't exist
-    try {
-      await connection.query('ALTER TABLE about ADD COLUMN nationality VARCHAR(255) AFTER location');
-    } catch (err) {
-      // Column probably already exists
-    }
-
-    // Add Skills columns if they don't exist (Migration)
-    try {
-      await connection.query('ALTER TABLE projects ADD COLUMN views INT DEFAULT 0 AFTER tags');
-    } catch (err) {
-      // Column probably already exists
-    }
-
-    try {
-      await connection.query("ALTER TABLE projects ADD COLUMN cat VARCHAR(255) DEFAULT 'Application Web' AFTER views");
-    } catch (err) {}
-    try {
-      await connection.query("ALTER TABLE projects ADD COLUMN status ENUM('live', 'pause', 'archive') DEFAULT 'live' AFTER cat");
-    } catch (err) {}
-    try {
-      await connection.query("ALTER TABLE projects ADD COLUMN year VARCHAR(10) AFTER status");
-    } catch (err) {}
-
-    try {
-      await connection.query('ALTER TABLE skills ADD COLUMN IF NOT EXISTS title VARCHAR(255) NOT NULL AFTER id');
-      await connection.query('ALTER TABLE skills ADD COLUMN IF NOT EXISTS description TEXT AFTER title');
-      await connection.query('ALTER TABLE skills ADD COLUMN IF NOT EXISTS technologies JSON AFTER description');
-      // Drop old columns if they exist
-      try { await connection.query('ALTER TABLE skills DROP COLUMN name'); } catch (e) {}
-      try { await connection.query('ALTER TABLE skills DROP COLUMN category'); } catch (e) {}
-      try { await connection.query('ALTER TABLE skills DROP COLUMN level'); } catch (e) {}
-    } catch (err) {
-      // Fallback for MySQL versions that don't support IF NOT EXISTS in ALTER
-      try { await connection.query('ALTER TABLE skills ADD COLUMN title VARCHAR(255) NOT NULL AFTER id'); } catch (e) {}
-      try { await connection.query('ALTER TABLE skills ADD COLUMN description TEXT AFTER title'); } catch (e) {}
-      try { await connection.query('ALTER TABLE skills ADD COLUMN technologies JSON AFTER description'); } catch (e) {}
-    }
-
-    // Drop Tasks column from projects if it exists
-    try {
-      await connection.query('ALTER TABLE projects DROP COLUMN tasks');
-    } catch (err) {
-      // Column probably already dropped
-    }
-
-    // Change description column type in experiences to JSON
-    try {
-      await connection.query('ALTER TABLE experiences MODIFY COLUMN description JSON');
-    } catch (err) {
-      // Column probably already modified
-    }
-
-    try {
-      await connection.query('ALTER TABLE blog_posts ADD COLUMN read_minutes INT AFTER content');
-    } catch (err) {
-    }
-
-    try {
-      await connection.query('ALTER TABLE technical_levels ADD COLUMN sort_order INT DEFAULT 0');
-    } catch (err) {
-    }
-
-    try {
-      await connection.query('ALTER TABLE analytics ADD COLUMN IF NOT EXISTS user_agent TEXT AFTER device');
-      await connection.query('ALTER TABLE analytics MODIFY COLUMN consent_analytics BOOLEAN DEFAULT TRUE AFTER session_id');
-      await connection.query('ALTER TABLE analytics ADD COLUMN IF NOT EXISTS ad_interests JSON AFTER consent_analytics');
-      await connection.query('ALTER TABLE analytics ADD COLUMN IF NOT EXISTS ad_click_source VARCHAR(255) AFTER ad_interests');
-      await connection.query('ALTER TABLE analytics ADD COLUMN IF NOT EXISTS retargeting_eligible BOOLEAN DEFAULT FALSE AFTER ad_click_source');
-      await connection.query('ALTER TABLE analytics ADD COLUMN IF NOT EXISTS color_scheme VARCHAR(20) AFTER retargeting_eligible');
-      await connection.query('ALTER TABLE analytics ADD COLUMN IF NOT EXISTS device_memory FLOAT AFTER color_scheme');
-      await connection.query('ALTER TABLE analytics ADD COLUMN IF NOT EXISTS hardware_concurrency INT AFTER device_memory');
-    } catch (err) {
-      try { await connection.query('ALTER TABLE analytics ADD COLUMN user_agent TEXT AFTER device'); } catch (e) {}
-      try { await connection.query('ALTER TABLE analytics ADD COLUMN ad_interests JSON AFTER consent_analytics'); } catch (e) {}
-      try { await connection.query('ALTER TABLE analytics ADD COLUMN ad_click_source VARCHAR(255) AFTER ad_interests'); } catch (e) {}
-      try { await connection.query('ALTER TABLE analytics ADD COLUMN retargeting_eligible BOOLEAN DEFAULT FALSE AFTER ad_click_source'); } catch (e) {}
-      try { await connection.query('ALTER TABLE analytics ADD COLUMN color_scheme VARCHAR(20) AFTER retargeting_eligible'); } catch (e) {}
-      try { await connection.query('ALTER TABLE analytics ADD COLUMN device_memory FLOAT AFTER color_scheme'); } catch (e) {}
-      try { await connection.query('ALTER TABLE analytics ADD COLUMN hardware_concurrency INT AFTER device_memory'); } catch (e) {}
-    }
-
-    console.log('Database tables synchronized successfully');
-
-    connection.release();
-  } catch (error) {
-    console.error('Error during database synchronization:', error);
-  }
-};
-
-// Run sync at startup
-syncDatabase();
+    conn.release();
+  })
+  .catch((err) => {
+    console.error('MySQL connection failed at boot:', err.message);
+  });
 
 module.exports = pool;

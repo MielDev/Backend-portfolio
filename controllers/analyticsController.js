@@ -2,8 +2,12 @@ const Analytics = require('../models/Analytics');
 
 exports.track = async (req, res) => {
   try {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    const user_agent = req.headers['user-agent'];
+    const hasConsent =
+      req.body.consent_analytics === true ||
+      req.body.consent_analytics === 1 ||
+      req.body.consent_analytics === 'true';
+    const ip = hasConsent ? (req.headers['x-forwarded-for'] || req.socket.remoteAddress) : null;
+    const user_agent = hasConsent ? req.headers['user-agent'] : null;
     await Analytics.track({ ...req.body, ip, user_agent });
     res.json({ success: true, message: 'Tracked successfully' });
   } catch (error) {

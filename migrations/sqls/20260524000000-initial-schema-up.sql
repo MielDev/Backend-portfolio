@@ -1,7 +1,9 @@
-CREATE DATABASE IF NOT EXISTS kadmiel_portfolio;
-USE kadmiel_portfolio;
+-- ============================================================
+-- Initial schema for portfolio-backend
+-- Consolidates every CREATE TABLE + ALTER TABLE that previously
+-- lived in config/db.js into a single, idempotent migration.
+-- ============================================================
 
--- Users table
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(255) NOT NULL UNIQUE,
@@ -9,7 +11,6 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Projects table
 CREATE TABLE IF NOT EXISTS projects (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -18,10 +19,13 @@ CREATE TABLE IF NOT EXISTS projects (
     github_url VARCHAR(255),
     demo_url VARCHAR(255),
     tags JSON,
+    views INT DEFAULT 0,
+    cat VARCHAR(255) DEFAULT 'Application Web',
+    status ENUM('live', 'pause', 'archive') DEFAULT 'live',
+    year VARCHAR(10),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Skills table
 CREATE TABLE IF NOT EXISTS skills (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -31,7 +35,6 @@ CREATE TABLE IF NOT EXISTS skills (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Experiences table
 CREATE TABLE IF NOT EXISTS experiences (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -44,11 +47,9 @@ CREATE TABLE IF NOT EXISTS experiences (
     type ENUM('work', 'stage', 'edu', 'freelance') DEFAULT 'work',
     icon VARCHAR(255),
     color VARCHAR(50),
-    digital_folder_url VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Testimonials table
 CREATE TABLE IF NOT EXISTS testimonials (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -60,7 +61,14 @@ CREATE TABLE IF NOT EXISTS testimonials (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Blog Posts table
+CREATE TABLE IF NOT EXISTS testimonial_tokens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    used TINYINT(1) DEFAULT 0,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS blog_posts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -73,7 +81,6 @@ CREATE TABLE IF NOT EXISTS blog_posts (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Messages table
 CREATE TABLE IF NOT EXISTS messages (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -84,7 +91,6 @@ CREATE TABLE IF NOT EXISTS messages (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- About table
 CREATE TABLE IF NOT EXISTS about (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255),
@@ -101,7 +107,6 @@ CREATE TABLE IF NOT EXISTS about (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Settings table
 CREATE TABLE IF NOT EXISTS settings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     setting_key VARCHAR(255) NOT NULL UNIQUE,
@@ -109,7 +114,6 @@ CREATE TABLE IF NOT EXISTS settings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Hero table
 CREATE TABLE IF NOT EXISTS hero (
     id INT AUTO_INCREMENT PRIMARY KEY,
     greeting VARCHAR(255),
@@ -122,7 +126,6 @@ CREATE TABLE IF NOT EXISTS hero (
     passion_icon VARCHAR(50)
 );
 
--- Analytics table
 CREATE TABLE IF NOT EXISTS analytics (
     id INT AUTO_INCREMENT PRIMARY KEY,
     event_type VARCHAR(50),
@@ -151,10 +154,12 @@ CREATE TABLE IF NOT EXISTS analytics (
     color_scheme VARCHAR(20),
     device_memory FLOAT,
     hardware_concurrency INT,
-    visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_analytics_session_id (session_id),
+    INDEX idx_analytics_visited_at (visited_at),
+    INDEX idx_analytics_event_type (event_type)
 );
 
--- Technical levels table
 CREATE TABLE IF NOT EXISTS technical_levels (
     id INT AUTO_INCREMENT PRIMARY KEY,
     type ENUM('hard', 'soft') NOT NULL,
@@ -166,7 +171,6 @@ CREATE TABLE IF NOT EXISTS technical_levels (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Availability table
 CREATE TABLE IF NOT EXISTS availability (
     id INT AUTO_INCREMENT PRIMARY KEY,
     badge_text VARCHAR(255),
@@ -181,7 +185,6 @@ CREATE TABLE IF NOT EXISTS availability (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Table pour stocker les sessions/cookies uniques par utilisateur
 CREATE TABLE IF NOT EXISTS cookies_data (
     id INT AUTO_INCREMENT PRIMARY KEY,
     session_id VARCHAR(255) UNIQUE,

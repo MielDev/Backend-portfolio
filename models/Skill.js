@@ -1,19 +1,15 @@
 const db = require('../config/db');
+const { parseArray } = require('../utils/json');
 
 class Skill {
   static async getAll() {
     const [rows] = await db.execute('SELECT * FROM skills ORDER BY title');
-    return rows.map(row => ({
-      ...row,
-      technologies: JSON.parse(row.technologies || '[]')
-    }));
+    return rows.map((row) => ({ ...row, technologies: parseArray(row.technologies) }));
   }
 
   static async getById(id) {
     const [rows] = await db.execute('SELECT * FROM skills WHERE id = ?', [id]);
-    if (rows[0]) {
-      rows[0].technologies = JSON.parse(rows[0].technologies || '[]');
-    }
+    if (rows[0]) rows[0].technologies = parseArray(rows[0].technologies);
     return rows[0];
   }
 

@@ -5,6 +5,12 @@ const jwt = require('jsonwebtoken');
 exports.login = async (req, res) => {
   try {
     const { username, password } = req.body;
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({
+        success: false,
+        message: 'Authentication is not configured'
+      });
+    }
 
     // Find user
     const user = await User.findByUsername(username);
