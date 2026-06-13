@@ -14,7 +14,8 @@
     "migrate:reset": "node scripts/db-migrate.js reset",
     "migrate:create": "node scripts/db-migrate.js create",
     "migrate:check": "node scripts/db-migrate.js check",
-    "migrate:baseline": "node scripts/migrate-baseline.js"
+    "migrate:baseline": "node scripts/migrate-baseline.js",
+    "analytics:backfill-countries": "node scripts/backfill-analytics-countries.js"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +29,7 @@
     "express": "^5.2.1",
     "express-rate-limit": "^7.5.0",
     "express-validator": "^7.3.1",
+    "geoip-lite": "^1.4.10",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.0",

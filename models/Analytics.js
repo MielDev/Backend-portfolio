@@ -267,10 +267,14 @@ class Analytics {
   static async getCountries(range = '30d') {
     const days = Analytics.parseRangeDays(range);
     const [rows] = await db.execute(`
-      SELECT COALESCE(NULLIF(country, ''), 'Inconnu') as country, COUNT(*) as count
+      SELECT country, COUNT(*) as count
       FROM analytics
-      WHERE event_type = 'pageview' AND visited_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-      GROUP BY COALESCE(NULLIF(country, ''), 'Inconnu')
+      WHERE event_type = 'pageview'
+      AND visited_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+      AND country IS NOT NULL
+      AND country <> ''
+      AND LOWER(country) <> 'inconnu'
+      GROUP BY country
       ORDER BY count DESC`, [days]);
     return rows;
   }

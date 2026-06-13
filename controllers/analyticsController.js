@@ -1,4 +1,5 @@
 const Analytics = require('../models/Analytics');
+const { getClientIp, resolveCountry } = require('../utils/geoCountry');
 
 exports.track = async (req, res) => {
   try {
@@ -6,9 +7,11 @@ exports.track = async (req, res) => {
       req.body.consent_analytics === true ||
       req.body.consent_analytics === 1 ||
       req.body.consent_analytics === 'true';
-    const ip = hasConsent ? (req.headers['x-forwarded-for'] || req.socket.remoteAddress) : null;
+    const clientIp = getClientIp(req);
+    const ip = hasConsent ? clientIp : null;
     const user_agent = hasConsent ? req.headers['user-agent'] : null;
-    await Analytics.track({ ...req.body, ip, user_agent });
+    const country = resolveCountry(req, clientIp, req.body.country);
+    await Analytics.track({ ...req.body, country, ip, user_agent });
     res.json({ success: true, message: 'Tracked successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
