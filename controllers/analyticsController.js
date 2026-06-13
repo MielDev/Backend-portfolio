@@ -87,8 +87,29 @@ exports.getTopPages = async (req, res) => {
 
 exports.getRecentEvents = async (req, res) => {
   try {
-    const events = await Analytics.getRecentEvents();
+    const { limit } = req.query;
+    const events = await Analytics.getRecentEvents(limit);
     res.json({ success: true, data: events });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getRealtime = async (req, res) => {
+  try {
+    const { minutes } = req.query;
+    const realtime = await Analytics.getRealtime(minutes);
+    res.json({ success: true, data: realtime });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getHourlyStats = async (req, res) => {
+  try {
+    const { range } = req.query;
+    const stats = await Analytics.getHourlyStats(range);
+    res.json({ success: true, data: stats });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
