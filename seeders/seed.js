@@ -231,6 +231,7 @@ const seed = async () => {
         'fa-solid fa-clipboard-list',
         '#FBBF24',
         null,
+        null,
       ],
       [
         'Développeur Web & Mobile Full-Stack',
@@ -249,6 +250,7 @@ const seed = async () => {
         'fa-solid fa-briefcase',
         '#FF3B3B',
         null,
+        null,
       ],
       [
         'Stagiaire — Développeur Web & Mobile',
@@ -266,6 +268,7 @@ const seed = async () => {
         'fa-solid fa-clipboard-list',
         '#FBBF24',
         null,
+        null,
       ],
       [
         'Certificat de spécialisation — Services numériques aux organisations',
@@ -282,6 +285,7 @@ const seed = async () => {
         'fa-solid fa-graduation-cap',
         '#7C3AED',
         '/dossier-numerique-cs-sno',
+        null,
       ],
       [
         'Licence professionnelle — Systèmes Informatiques & Logiciels',
@@ -297,6 +301,7 @@ const seed = async () => {
         'fa-solid fa-graduation-cap',
         '#7C3AED',
         null,
+        null,
       ],
       [
         'Baccalauréat scientifique',
@@ -310,11 +315,12 @@ const seed = async () => {
         'fa-solid fa-graduation-cap',
         '#7C3AED',
         null,
+        null,
       ],
     ];
     for (const exp of experiences) {
       await db.execute(
-        'INSERT INTO experiences (title, company, location, start_date, end_date, description, current, type, icon, color, digital_folder_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO experiences (title, company, location, start_date, end_date, description, current, type, icon, color, digital_folder_url, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         exp
       );
     }

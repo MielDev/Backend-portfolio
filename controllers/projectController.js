@@ -1,4 +1,5 @@
 const Project = require('../models/Project');
+const { toPublicUploadPath } = require('../middleware/upload');
 
 exports.getAllProjects = async (req, res) => {
   try {
@@ -25,7 +26,7 @@ exports.createProject = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Project image is required.' });
     }
     const data = { ...req.body };
-    data.image = req.file.filename;
+    data.image = toPublicUploadPath(req.file);
     if (data.tags && typeof data.tags === 'string') {
       try {
         data.tags = JSON.parse(data.tags);
@@ -43,7 +44,7 @@ exports.createProject = async (req, res) => {
 exports.updateProject = async (req, res) => {
   try {
     const data = { ...req.body };
-    if (req.file) data.image = req.file.filename;
+    if (req.file) data.image = toPublicUploadPath(req.file);
     if (data.tags && typeof data.tags === 'string') {
       try {
         data.tags = JSON.parse(data.tags);

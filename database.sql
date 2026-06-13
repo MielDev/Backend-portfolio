@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS experiences (
     icon VARCHAR(255),
     color VARCHAR(50),
     digital_folder_url VARCHAR(500),
+    image VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

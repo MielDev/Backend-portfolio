@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS experiences (
     type ENUM('work', 'stage', 'edu', 'freelance') DEFAULT 'work',
     icon VARCHAR(255),
     color VARCHAR(50),
+    image VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

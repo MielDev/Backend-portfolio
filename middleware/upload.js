@@ -30,8 +30,13 @@ const fileFilter = (req, file, cb) => {
   cb(new Error('Only image files are allowed'));
 };
 
-module.exports = multer({
+const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter,
 });
+
+const toPublicUploadPath = (file) => (file ? `/uploads/${file.filename}` : null);
+
+module.exports = upload;
+module.exports.toPublicUploadPath = toPublicUploadPath;

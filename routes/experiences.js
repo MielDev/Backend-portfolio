@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const experienceController = require('../controllers/experienceController');
 const auth = require('../middleware/auth');
+const upload = require('../middleware/upload');
 const { body } = require('express-validator');
 const validate = require('../middleware/validate');
 
@@ -18,8 +19,8 @@ const experienceValidation = [
 router.get('/', experienceController.getAllExperiences);
 
 // Protected routes
-router.post('/', auth, experienceValidation, experienceController.createExperience);
-router.put('/:id', auth, experienceValidation, experienceController.updateExperience);
+router.post('/', auth, upload.single('image'), experienceValidation, experienceController.createExperience);
+router.put('/:id', auth, upload.single('image'), experienceValidation, experienceController.updateExperience);
 router.delete('/:id', auth, experienceController.deleteExperience);
 
 module.exports = router;

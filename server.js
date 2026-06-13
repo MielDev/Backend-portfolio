@@ -58,6 +58,7 @@ const allowedOrigins = new Set([
   'http://localhost:4200',
   'https://portfolio-kadmiel.vercel.app',
   'https://kadmiel-tognon.vercel.app',
+  'https://kadmiel-togonon.reseau-solidarite-france.fr',
   ...parseOrigins(process.env.CLIENT_URL),
   ...parseOrigins(process.env.CLIENT_URLS),
 ]);
